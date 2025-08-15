@@ -92,7 +92,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
     // Categorize variables based on their names/tickers
     if (variable.series.toLowerCase().includes('pce') || variable.series.toLowerCase().includes('cpi') || variable.series.toLowerCase().includes('inflation')) {
       category = 'Inflation & Prices';
-    } else if (variable.series.toLowerCase().includes('industrial production') || variable.series.toLowerCase().includes('leading index') || variable.series.toLowerCase().includes('gdp') || variable.series.toLowerCase().includes('production') || variable.series.toLowerCase().includes('index') && !variable.series.toLowerCase().includes('crude') && !variable.series.toLowerCase().includes('rate')) {
+    } else if ((variable.series.toLowerCase().includes('industrial production') || variable.series.toLowerCase().includes('leading index') || variable.series.toLowerCase().includes('gdp') || variable.series.toLowerCase().includes('production') || variable.series.toLowerCase().includes('index')) && !variable.series.toLowerCase().includes('crude') && !variable.series.toLowerCase().includes('rate')) {
       category = 'Economic Activity';
     } else if (variable.series.toLowerCase().includes('high yield') || variable.series.toLowerCase().includes('oas') || variable.series.toLowerCase().includes('spread') || variable.fredTicker.includes('T10Y2Y') || variable.fredTicker.includes('BAML')) {
       category = 'Credit & Risk Spreads';

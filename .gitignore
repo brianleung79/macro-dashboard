@@ -71,3 +71,4 @@ Thumbs.db
 # CORS proxy server (not needed for production)
 cors-proxy.js
 node_modules
+.vercel

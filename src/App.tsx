@@ -239,15 +239,15 @@ function App() {
           
           return [
             {
-              x: rollingStats.map((d: any) => d.date),
-              y: rollingStats.map((d: any) => d.rollingMean),
+              x: rollingStats.rollingMean.map((d: any) => d.date),
+              y: rollingStats.rollingMean.map((d: any) => d.value),
               name: `${variable.series} - Rolling Mean`,
               type: 'scatter' as const,
               mode: 'lines' as const
             },
             {
-              x: rollingStats.map((d: any) => d.date),
-              y: rollingStats.map((d: any) => d.rollingStd),
+              x: rollingStats.rollingStd.map((d: any) => d.date),
+              y: rollingStats.rollingStd.map((d: any) => d.value),
               name: `${variable.series} - Rolling Std`,
               type: 'scatter' as const,
               mode: 'lines' as const
