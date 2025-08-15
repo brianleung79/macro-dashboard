@@ -6,9 +6,9 @@ const FRED_API_KEY = 'abf2178d3c7946daaddfb379a2567750';
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations';
 
 export class FREDService {
-  // Base URL for the backend proxy (change this to your deployed backend URL)
+  // Base URL for the backend proxy (use relative URL for production)
   private static BACKEND_URL = process.env.NODE_ENV === 'production' 
-    ? 'https://your-backend-domain.com' 
+    ? '' 
     : 'http://localhost:3001';
 
   static async fetchTimeSeriesData(
