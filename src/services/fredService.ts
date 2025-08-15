@@ -6,64 +6,122 @@ const FRED_API_KEY = 'abf2178d3c7946daaddfb379a2567750';
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations';
 
 export class FREDService {
+  // Base URL for the backend proxy (change this to your deployed backend URL)
+  private static BACKEND_URL = process.env.NODE_ENV === 'production' 
+    ? 'https://your-backend-domain.com' 
+    : 'http://localhost:3001';
+
   static async fetchTimeSeriesData(
     variable: MacroVariable,
     startDate: string,
     endDate: string
   ): Promise<TimeSeriesData[]> {
     try {
-      console.log(`Fetching data for ${variable.series} (${variable.fredTicker})`);
+      console.log(`=== Fetching data for ${variable.series} (${variable.fredTicker}) ===`);
+      console.log(`Date range: ${startDate} to ${endDate}`);
       
-      const targetUrl = `${FRED_BASE_URL}?series_id=${variable.fredTicker}&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startDate}&observation_end=${endDate}&frequency=m&aggregation_method=avg`;
-      
-      let response: any;
-      
-      // Try public CORS proxies in order of preference
-      const corsProxies = [
-        'https://corsproxy.io/?',
-        'https://api.allorigins.win/raw?url=',
-        'https://cors-anywhere.herokuapp.com/'
-      ];
-      
-      for (const proxy of corsProxies) {
-        try {
-          const proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
-          console.log('Trying proxy:', proxy);
-          response = await axios.get<FREDResponse>(proxyUrl, {
-            timeout: 30000,
-            headers: {
-              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-            }
-          });
-          
-          if (!response.data || !response.data.observations) {
-            console.error('Invalid API response:', response.data);
-            continue;
-          }
-          
-          console.log('Proxy successful:', proxy);
-          break;
-        } catch (error) {
-          console.error(`Proxy ${proxy} failed:`, error);
-          continue;
+      // Try backend proxy first
+      try {
+        console.log('Trying backend proxy...');
+        const proxyUrl = `${this.BACKEND_URL}/api/fred/${variable.fredTicker}?start=${startDate}&end=${endDate}`;
+        console.log('Backend proxy URL:', proxyUrl);
+        
+        const response = await axios.get(proxyUrl, {
+          timeout: 30000
+        });
+        
+        console.log('Backend proxy successful!');
+        console.log('Number of observations:', response.data.observations?.length || 0);
+        
+        if (!response.data || !response.data.observations) {
+          throw new Error('Invalid response from backend proxy');
+        }
+        
+        const filteredData = response.data.observations
+          .filter((obs: any) => obs.value !== '.')
+          .map((obs: any) => ({
+            date: obs.date,
+            value: parseFloat(obs.value),
+            series: variable.series
+          }));
+        
+        console.log(`Filtered data points: ${filteredData.length}`);
+        return filteredData;
+        
+      } catch (proxyError) {
+        console.log('Backend proxy failed, falling back to CORS proxies...');
+        console.error('Proxy error:', proxyError);
+        
+        // Fallback to CORS proxies for development
+        if (process.env.NODE_ENV === 'development') {
+          return this.fetchWithCORSProxies(variable, startDate, endDate);
+        } else {
+          throw new Error('Backend proxy is required in production. Please ensure the backend service is running.');
         }
       }
       
-      if (!response || !response.data || !response.data.observations) {
-        throw new Error('All CORS proxies failed. Please try again later.');
-      }
-      
-      return response.data.observations
-        .filter((obs: any) => obs.value !== '.')
-        .map((obs: any) => ({
-          date: obs.date,
-          value: parseFloat(obs.value),
-          series: variable.series
-        }));
     } catch (error) {
       console.error(`Error fetching data for ${variable.series}:`, error);
       throw error;
     }
+  }
+
+  // Fallback method using CORS proxies (development only)
+  private static async fetchWithCORSProxies(
+    variable: MacroVariable,
+    startDate: string,
+    endDate: string
+  ): Promise<TimeSeriesData[]> {
+    const targetUrl = `${FRED_BASE_URL}?series_id=${variable.fredTicker}&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startDate}&observation_end=${endDate}&frequency=m&aggregation_method=avg`;
+    
+    console.log('Target URL:', targetUrl);
+    
+    let response: any;
+    
+    // Try public CORS proxies in order of preference
+    const corsProxies = [
+      'https://api.allorigins.win/raw?url=',
+      'https://corsproxy.io/?',
+      'https://thingproxy.freeboard.io/fetch/',
+      'https://cors-anywhere.herokuapp.com/'
+    ];
+    
+    for (const proxy of corsProxies) {
+      try {
+        const proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
+        console.log('Trying CORS proxy:', proxy);
+        
+        response = await axios.get<FREDResponse>(proxyUrl, {
+          timeout: 30000,
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+          }
+        });
+        
+        if (!response.data || !response.data.observations) {
+          console.error('Invalid API response:', response.data);
+          continue;
+        }
+        
+        console.log('CORS proxy successful:', proxy);
+        break;
+      } catch (error) {
+        console.error(`CORS proxy ${proxy} failed:`, error);
+        continue;
+      }
+    }
+    
+    if (!response || !response.data || !response.data.observations) {
+      throw new Error('All CORS proxies failed. This is likely due to CORS restrictions in production.');
+    }
+    
+    return response.data.observations
+      .filter((obs: any) => obs.value !== '.')
+      .map((obs: any) => ({
+        date: obs.date,
+        value: parseFloat(obs.value),
+        series: variable.series
+      }));
   }
 
   static async fetchMultipleTimeSeries(

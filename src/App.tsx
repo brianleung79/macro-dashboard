@@ -24,6 +24,14 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  
+  // Debug: Monitor chartData state changes
+  useEffect(() => {
+    console.log('🔄 chartData state changed:', chartData);
+    console.log('Chart 1 state:', chartData.chart1);
+    console.log('Chart 2 state:', chartData.chart2);
+  }, [chartData]);
+
   const [dashboardConfig, setDashboardConfig] = useState<DashboardConfig>({
     chart1: {
       variables: [],
@@ -97,6 +105,10 @@ function App() {
   };
 
   const runDashboardAnalysis = async () => {
+    console.log('=== Starting Dashboard Analysis ===');
+    console.log('Dashboard Config:', dashboardConfig);
+    console.log('Available Variables:', availableVariables);
+    
     setIsLoading(true);
     setError(null);
 
@@ -111,16 +123,30 @@ function App() {
 
       // Chart 1: Price Chart
       if (dashboardConfig.chart1.variables.length > 0) {
+        console.log('Processing Chart 1 with variables:', dashboardConfig.chart1.variables);
         const timeSeriesData = await FREDService.fetchMultipleTimeSeries(
           dashboardConfig.chart1.variables,
           dashboardConfig.chart1.timeframe.startDate,
           dashboardConfig.chart1.timeframe.endDate
         );
+        console.log('Chart 1 data received:', timeSeriesData);
         newChartData.chart1 = convertToChartData(timeSeriesData);
+        console.log('Chart 1 converted data:', newChartData.chart1);
+        console.log('Chart 1 data structure details:', {
+          length: newChartData.chart1.length,
+          firstSeries: newChartData.chart1[0],
+          xLength: newChartData.chart1[0]?.x?.length,
+          yLength: newChartData.chart1[0]?.y?.length,
+          sampleX: newChartData.chart1[0]?.x?.slice(0, 3),
+          sampleY: newChartData.chart1[0]?.y?.slice(0, 3)
+        });
+      } else {
+        console.log('Chart 1: No variables selected');
       }
 
       // Chart 2: Ratio/Spread
       if (dashboardConfig.chart2.variable1 && dashboardConfig.chart2.variable2) {
+        console.log('Processing Chart 2 with variables:', dashboardConfig.chart2.variable1, dashboardConfig.chart2.variable2);
         const data1 = await FREDService.fetchTimeSeriesData(
           dashboardConfig.chart2.variable1,
           dashboardConfig.chart2.timeframe.startDate,
@@ -146,6 +172,17 @@ function App() {
             mode: 'lines' as const
           }];
         }
+        console.log('Chart 2 data:', newChartData.chart2);
+        console.log('Chart 2 data structure details:', {
+          length: newChartData.chart2.length,
+          firstSeries: newChartData.chart2[0],
+          xLength: newChartData.chart2[0]?.x?.length,
+          yLength: newChartData.chart2[0]?.y?.length,
+          sampleX: newChartData.chart2[0]?.x?.slice(0, 3),
+          sampleY: newChartData.chart2[0]?.y?.slice(0, 3)
+        });
+      } else {
+        console.log('Chart 2: Missing variables');
       }
 
       // Chart 3: Ratio/Spread
@@ -260,6 +297,28 @@ function App() {
       }
 
       setChartData(newChartData);
+      console.log('=== Final Chart Data Set ===');
+      console.log('Final chartData state:', newChartData);
+      console.log('Chart 1 final state:', newChartData.chart1);
+      console.log('Chart 2 final state:', newChartData.chart2);
+      
+      // Detailed structure logging
+      console.log('🔍 Detailed newChartData structure:');
+      console.log('newChartData type:', typeof newChartData);
+      console.log('newChartData keys:', Object.keys(newChartData));
+      console.log('newChartData.chart1 type:', typeof newChartData.chart1);
+      console.log('newChartData.chart1 length:', newChartData.chart1?.length);
+      console.log('newChartData.chart1[0]:', newChartData.chart1?.[0]);
+      
+      console.log('🔄 About to call setChartData with:', newChartData);
+      setChartData(newChartData);
+      console.log('✅ setChartData called successfully');
+      
+      // Verify the state was updated
+      setTimeout(() => {
+        console.log('⏰ State after 100ms:', chartData);
+      }, 100);
+      
     } catch (error) {
       console.error('Dashboard analysis error:', error);
       setError(error instanceof Error ? error.message : 'An error occurred during analysis.');

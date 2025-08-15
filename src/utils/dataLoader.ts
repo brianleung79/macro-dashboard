@@ -3,11 +3,23 @@ import { MacroVariable } from '../types';
 export class DataLoader {
   static async loadMacroVariables(): Promise<MacroVariable[]> {
     try {
+      console.log('=== Loading Macro Variables from CSV ===');
       const response = await fetch('/FRED_DATA.csv');
+      console.log('CSV fetch response status:', response.status);
+      console.log('CSV fetch response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch CSV: ${response.status} ${response.statusText}`);
+      }
+      
       const csvText = await response.text();
+      console.log('CSV text length:', csvText.length);
+      console.log('CSV first 200 chars:', csvText.substring(0, 200));
       
       // Parse CSV
       const lines = csvText.split('\n');
+      console.log('Total CSV lines:', lines.length);
+      
       const variables: MacroVariable[] = [];
       
       // Skip header row
@@ -40,6 +52,9 @@ export class DataLoader {
           }
         }
       }
+      
+      console.log('Parsed variables count:', variables.length);
+      console.log('Sample variables:', variables.slice(0, 3));
       
       return variables;
     } catch (error) {

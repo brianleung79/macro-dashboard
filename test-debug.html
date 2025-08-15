@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FRED API Debug Test</title>
+</head>
+<body>
+    <h1>FRED API Debug Test</h1>
+    <button onclick="testFREDAPI()">Test FRED API</button>
+    <button onclick="testCSVLoad()">Test CSV Load</button>
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<div>' + message + '</div>';
+            console.log(message);
+        }
+
+        async function testCSVLoad() {
+            try {
+                log('Testing CSV load...');
+                const response = await fetch('/FRED_DATA.csv');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                log('CSV loaded successfully. First 200 chars: ' + csvText.substring(0, 200));
+                
+                // Parse first few lines
+                const lines = csvText.split('\n');
+                log('Total lines: ' + lines.length);
+                log('First 3 lines: ' + lines.slice(0, 3).join(' | '));
+            } catch (error) {
+                log('CSV load error: ' + error.message);
+            }
+        }
+
+        async function testFREDAPI() {
+            try {
+                log('Testing FRED API...');
+                
+                const FRED_API_KEY = 'abf2178d3c7946daaddfb379a2567750';
+                const targetUrl = `https://api.stlouisfed.org/fred/series/observations?series_id=FEDFUNDS&api_key=${FRED_API_KEY}&file_type=json&observation_start=2023-01-01&observation_end=2024-01-01&frequency=m&aggregation_method=avg`;
+                
+                log('Target URL: ' + targetUrl);
+                
+                // Try direct fetch first
+                try {
+                    log('Trying direct fetch...');
+                    const response = await fetch(targetUrl);
+                    if (response.ok) {
+                        const data = await response.json();
+                        log('Direct fetch successful! Observations: ' + (data.observations ? data.observations.length : 'none'));
+                        return;
+                    } else {
+                        log('Direct fetch failed with status: ' + response.status);
+                    }
+                } catch (error) {
+                    log('Direct fetch error: ' + error.message);
+                }
+                
+                // Try CORS proxies
+                const corsProxies = [
+                    'https://corsproxy.io/?',
+                    'https://api.allorigins.win/raw?url=',
+                    'https://cors-anywhere.herokuapp.com/'
+                ];
+                
+                for (const proxy of corsProxies) {
+                    try {
+                        log('Trying proxy: ' + proxy);
+                        const proxyUrl = proxy + encodeURIComponent(targetUrl);
+                        const response = await fetch(proxyUrl, {
+                            headers: {
+                                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                            }
+                        });
+                        
+                        if (response.ok) {
+                            const data = await response.json();
+                            log('Proxy ' + proxy + ' successful! Observations: ' + (data.observations ? data.observations.length : 'none'));
+                            return;
+                        } else {
+                            log('Proxy ' + proxy + ' failed with status: ' + response.status);
+                        }
+                    } catch (error) {
+                        log('Proxy ' + proxy + ' error: ' + error.message);
+                    }
+                }
+                
+                log('All methods failed');
+                
+            } catch (error) {
+                log('Test error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

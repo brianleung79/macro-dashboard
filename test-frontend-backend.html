@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Frontend-Backend Connection Test</title>
+</head>
+<body>
+    <h1>Frontend-Backend Connection Test</h1>
+    <button onclick="testBackendConnection()">Test Backend Connection</button>
+    <button onclick="testFREDProxy()">Test FRED Proxy</button>
+    <div id="output"></div>
+
+    <script>
+        function log(message) {
+            const output = document.getElementById('output');
+            output.innerHTML += '<div>' + message + '</div>';
+            console.log(message);
+        }
+
+        async function testBackendConnection() {
+            try {
+                log('Testing backend connection...');
+                const response = await fetch('http://localhost:3001/api/health');
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ Backend connection successful: ' + JSON.stringify(data));
+                } else {
+                    log('❌ Backend connection failed: ' + response.status);
+                }
+            } catch (error) {
+                log('❌ Backend connection error: ' + error.message);
+            }
+        }
+
+        async function testFREDProxy() {
+            try {
+                log('Testing FRED proxy...');
+                const response = await fetch('http://localhost:3001/api/fred/FEDFUNDS?start=2023-01-01&end=2024-01-01');
+                if (response.ok) {
+                    const data = await response.json();
+                    log('✅ FRED proxy successful: ' + (data.observations ? data.observations.length : 0) + ' observations');
+                    if (data.observations && data.observations.length > 0) {
+                        log('Sample data: ' + JSON.stringify(data.observations[0]));
+                    }
+                } else {
+                    log('❌ FRED proxy failed: ' + response.status);
+                }
+            } catch (error) {
+                log('❌ FRED proxy error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>
