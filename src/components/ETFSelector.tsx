@@ -11,7 +11,6 @@ export const ETFSelector: React.FC<ETFSelectorProps> = ({ onETFsSelected, select
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
 
-  const allETFs = AlphaVantageService.getAllETFs();
   const factorETFs = AlphaVantageService.getETFsByCategory('factor');
   const sectorETFs = AlphaVantageService.getETFsByCategory('sector');
 
