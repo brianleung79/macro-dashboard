@@ -13,6 +13,11 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // Check if API key is available
+    if (!process.env.FRED_API_KEY) {
+      throw new Error('FRED API key not configured. Please set FRED_API_KEY environment variable.');
+    }
+
     const { seriesId } = req.query;
     const { start, end } = req.query;
 
@@ -21,7 +26,7 @@ module.exports = async (req, res) => {
     const url = 'https://api.stlouisfed.org/fred/series/observations';
     const params = {
       series_id: seriesId,
-      api_key: 'abf2178d3c7946daaddfb379a2567750', // NOTE: Should be environment variable in production
+      api_key: process.env.FRED_API_KEY, // Get from Vercel environment variable
       file_type: 'json',
       observation_start: start,
       observation_end: end,
