@@ -18,7 +18,7 @@ export const ETFSelector: React.FC<ETFSelectorProps> = ({ onETFsSelected, select
   // Get unique subcategories for the selected category
   const getSubcategories = (category: 'factor' | 'sector'): string[] => {
     const etfs = category === 'factor' ? factorETFs : sectorETFs;
-    const subcategories = [...new Set(etfs.map(etf => etf.subcategory))];
+    const subcategories = Array.from(new Set(etfs.map(etf => etf.subcategory)));
     return ['all', ...subcategories.sort()];
   };
 
