@@ -1,0 +1,50 @@
+Series,FRED_Ticker
+Effective Fed Funds Rate,FEDFUNDS
+3M T-Bill Secondary Market Rate,TB3MS
+2Y Treasury Yield,DGS2
+10Y Treasury Yield,DGS10
+30Y Treasury Yield,DGS30
+10Y minus 2Y Treasury Spread,T10Y2Y
+10Y minus 3M Treasury Spread,T10Y3M
+10Y Breakeven Inflation,T10YIE
+5y5y Forward Inflation Expectation,T5YIFR
+30Y Fixed Mortgage Rate,MORTGAGE30US
+"CPI, All Items",CPIAUCSL
+"Core CPI, Ex Food and Energy",CPILFENS
+PCE Price Index,PCEPI
+Core PCE Price Index,PCEPILFE
+"PPI, All Commodities",PPIACO
+"Retail Gasoline Price, Regular",GASREGW
+Real GDP,GDPC1
+Real Personal Consumption Expenditures,PCECC96
+"Industrial Production, Total Index",INDPRO
+"Advance Retail Sales, Total",RSAFS
+"Advance Retail Sales, Ex Autos",RSXFS
+Leading Index for the United States,USSLIND
+"Nonfarm Payrolls, Total",PAYEMS
+"Unemployment Rate, U-3",UNRATE
+Initial Jobless Claims,ICSA
+"Job Openings, JOLTS",JTSJOL
+Labor Force Participation Rate,CIVPART
+"Housing Starts, Total",HOUST
+"Building Permits, Total",PERMIT
+Case-Shiller U.S. National HPI (NSA),CSUSHPINSA
+S&P 500 Index,SP500
+Nasdaq Composite Index,NASDAQCOM
+CBOE VIX Index,VIXCLS
+"Broad U.S. Dollar Index, Nominal (Goods & Services)",DTWEXBGS
+USD per EUR (EUR/USD),DEXUSEU
+JPY per USD (USD/JPY),DEXJPUS
+USD per GBP (GBP/USD),DEXUSUK
+USD per AUD (AUD/USD),DEXUSAL
+MXN per USD (USD/MXN),DEXMXUS
+CNY per USD (USD/CNY),DEXCHUS
+CAD per USD (USD/CAD),DEXCAUS
+"WTI Crude Oil, Cushing",DCOILWTICO
+"Brent Crude Oil, Europe",WCOILBRENTEU
+"Gold Fixing Price, London AM",GOLDAMGBD228NLBM
+Henry Hub Natural Gas Spot Price,DHHNGSP
+Global Price of Copper,PCOPPUSDM
+ICE BofA US High Yield OAS,BAMLH0A0HYM2
+ICE BofA BBB Corporate OAS,BAMLC0A4CBBB
+St. Louis Fed Financial Stress Index (v2),STLFSI2
