@@ -1,12 +1,7 @@
 import axios from 'axios';
 import { MacroVariable, TimeSeriesData, FREDResponse } from '../types';
 
-// Debug environment variable loading
-console.log('Environment variables check:');
-console.log('REACT_APP_FRED_API_KEY:', process.env.REACT_APP_FRED_API_KEY);
-console.log('NODE_ENV:', process.env.NODE_ENV);
-
-// Temporarily hardcode the API key to ensure it works
+// FRED API configuration
 const FRED_API_KEY = 'abf2178d3c7946daaddfb379a2567750';
 const FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations';
 
@@ -18,44 +13,46 @@ export class FREDService {
   ): Promise<TimeSeriesData[]> {
     try {
       console.log(`Fetching data for ${variable.series} (${variable.fredTicker})`);
-      console.log(`API Key: ${FRED_API_KEY.substring(0, 8)}...`);
-      console.log(`Full API Key: ${FRED_API_KEY}`);
       
-      // Try direct API call first
       const targetUrl = `${FRED_BASE_URL}?series_id=${variable.fredTicker}&api_key=${FRED_API_KEY}&file_type=json&observation_start=${startDate}&observation_end=${endDate}&frequency=m&aggregation_method=avg`;
       
       let response: any;
-      try {
-        // Try direct API call first
-        console.log('Attempting direct API call...');
-        response = await axios.get<FREDResponse>(targetUrl);
-        console.log('Direct API call successful!');
-      } catch (directError) {
-        console.log('Direct API call failed, trying local CORS proxy...');
-        // Use local CORS proxy server
+      
+      // Try public CORS proxies in order of preference
+      const corsProxies = [
+        'https://corsproxy.io/?',
+        'https://api.allorigins.win/raw?url=',
+        'https://cors-anywhere.herokuapp.com/'
+      ];
+      
+      for (const proxy of corsProxies) {
         try {
-          const proxyUrl = `http://localhost:3002/proxy/fred?url=${encodeURIComponent(targetUrl)}`;
-          console.log('Trying local proxy:', proxyUrl);
-          response = await axios.get<FREDResponse>(proxyUrl);
-          console.log('Local proxy successful!');
-        } catch (proxyError) {
-          console.error('Local proxy failed:', proxyError);
-          throw new Error('Local CORS proxy failed - make sure the proxy server is running');
+          const proxyUrl = `${proxy}${encodeURIComponent(targetUrl)}`;
+          console.log('Trying proxy:', proxy);
+          response = await axios.get<FREDResponse>(proxyUrl, {
+            timeout: 30000,
+            headers: {
+              'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            }
+          });
+          
+          if (!response.data || !response.data.observations) {
+            console.error('Invalid API response:', response.data);
+            continue;
+          }
+          
+          console.log('Proxy successful:', proxy);
+          break;
+        } catch (error) {
+          console.error(`Proxy ${proxy} failed:`, error);
+          continue;
         }
       }
-
-      if (!response) {
-        throw new Error('No response received from any method');
+      
+      if (!response || !response.data || !response.data.observations) {
+        throw new Error('All CORS proxies failed. Please try again later.');
       }
-
-      console.log(`Response received for ${variable.series}:`, response.data);
-
-      // Check if response.data.observations exists
-      if (!response.data || !response.data.observations) {
-        console.error('Invalid response structure:', response.data);
-        throw new Error('Invalid response structure from FRED API');
-      }
-
+      
       return response.data.observations
         .filter((obs: any) => obs.value !== '.')
         .map((obs: any) => ({
@@ -65,12 +62,6 @@ export class FREDService {
         }));
     } catch (error) {
       console.error(`Error fetching data for ${variable.series}:`, error);
-      if (axios.isAxiosError(error)) {
-        console.error('Response status:', error.response?.status);
-        console.error('Response data:', error.response?.data);
-        console.error('Request URL:', error.config?.url);
-        console.error('Request params:', error.config?.params);
-      }
       throw error;
     }
   }
@@ -102,19 +93,19 @@ export class FREDService {
     if (!windowSize) {
       windowSize = 12;
     }
-
+  
     const data1Map = new Map(data1.map(d => [d.date, d.value]));
     const data2Map = new Map(data2.map(d => [d.date, d.value]));
-
+  
     const allDates = Array.from(new Set([...Array.from(data1Map.keys()), ...Array.from(data2Map.keys())])).sort();
-
+  
     const correlations: TimeSeriesData[] = [];
-
+  
     for (let i = windowSize - 1; i < allDates.length; i++) {
       const windowDates = allDates.slice(i - windowSize + 1, i + 1);
       const values1: number[] = [];
       const values2: number[] = [];
-
+  
       windowDates.forEach(date => {
         const val1 = data1Map.get(date);
         const val2 = data2Map.get(date);
@@ -123,7 +114,7 @@ export class FREDService {
           values2.push(val2);
         }
       });
-
+  
       if (values1.length === windowSize && values2.length === windowSize) {
         const correlation = this.calculateCorrelation(values1, values2);
         correlations.push({
@@ -133,24 +124,49 @@ export class FREDService {
         });
       }
     }
-
+  
     return correlations;
   }
 
-  static calculateCorrelation(x: number[], y: number[]): number {
-    const n = x.length;
-    if (n !== y.length || n === 0) return 0;
-    
-    const sumX = x.reduce((a, b) => a + b, 0);
-    const sumY = y.reduce((a, b) => a + b, 0);
-    const sumXY = x.reduce((sum, xi, i) => sum + xi * y[i], 0);
-    const sumX2 = x.reduce((sum, xi) => sum + xi * xi, 0);
-    const sumY2 = y.reduce((sum, yi) => sum + yi * yi, 0);
-    
-    const numerator = n * sumXY - sumX * sumY;
-    const denominator = Math.sqrt((n * sumX2 - sumX * sumX) * (n * sumY2 - sumY * sumY));
-    
-    return denominator === 0 ? 0 : numerator / denominator;
+  static calculateRollingStatistics(
+    data: TimeSeriesData[],
+    windowSize?: number
+  ): { rollingMean: TimeSeriesData[], rollingStd: TimeSeriesData[] } {
+    // Auto-calculate window size if not provided (default to 12 months)
+    if (!windowSize) {
+      windowSize = 12;
+    }
+  
+    const dataMap = new Map(data.map(d => [d.date, d.value]));
+    const allDates = Array.from(dataMap.keys()).sort();
+  
+    const rollingMean: TimeSeriesData[] = [];
+    const rollingStd: TimeSeriesData[] = [];
+  
+    for (let i = windowSize - 1; i < allDates.length; i++) {
+      const windowDates = allDates.slice(i - windowSize + 1, i + 1);
+      const values = windowDates.map(date => dataMap.get(date)).filter(val => val !== undefined) as number[];
+  
+      if (values.length === windowSize) {
+        const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
+        const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
+        const std = Math.sqrt(variance);
+  
+        rollingMean.push({
+          date: allDates[i],
+          value: mean,
+          series: 'Rolling Mean'
+        });
+  
+        rollingStd.push({
+          date: allDates[i],
+          value: std,
+          series: 'Rolling Std Dev'
+        });
+      }
+    }
+  
+    return { rollingMean, rollingStd };
   }
 
   static calculateRatio(
@@ -159,9 +175,9 @@ export class FREDService {
   ): TimeSeriesData[] {
     const data1Map = new Map(data1.map(d => [d.date, d.value]));
     const data2Map = new Map(data2.map(d => [d.date, d.value]));
-    
+  
     const allDates = Array.from(new Set([...Array.from(data1Map.keys()), ...Array.from(data2Map.keys())])).sort();
-    
+  
     return allDates
       .map(date => {
         const val1 = data1Map.get(date);
@@ -184,9 +200,9 @@ export class FREDService {
   ): TimeSeriesData[] {
     const data1Map = new Map(data1.map(d => [d.date, d.value]));
     const data2Map = new Map(data2.map(d => [d.date, d.value]));
-    
+  
     const allDates = Array.from(new Set([...Array.from(data1Map.keys()), ...Array.from(data2Map.keys())])).sort();
-    
+  
     return allDates
       .map(date => {
         const val1 = data1Map.get(date);
@@ -203,31 +219,21 @@ export class FREDService {
       .filter((item): item is TimeSeriesData => item !== null);
   }
 
-  static calculateRollingStatistics(
-    data: TimeSeriesData[],
-    windowSize?: number
-  ): Array<{ date: string; rollingMean: number; rollingStd: number }> {
-    // Auto-calculate window size if not provided (default to 12 months)
-    if (!windowSize) {
-      windowSize = 12;
+  private static calculateCorrelation(values1: number[], values2: number[]): number {
+    if (values1.length !== values2.length || values1.length === 0) {
+      return 0;
     }
-
-    const stats: Array<{ date: string; rollingMean: number; rollingStd: number }> = [];
-
-    for (let i = windowSize - 1; i < data.length; i++) {
-      const windowData = data.slice(i - windowSize + 1, i + 1);
-      const values = windowData.map(d => d.value);
-
-      const mean = values.reduce((sum, val) => sum + val, 0) / values.length;
-      const variance = values.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) / values.length;
-      const std = Math.sqrt(variance);
-
-      stats.push({
-        date: data[i].date,
-        rollingMean: mean,
-        rollingStd: std
-      });
-    }
-    return stats;
+  
+    const n = values1.length;
+    const sum1 = values1.reduce((sum, val) => sum + val, 0);
+    const sum2 = values2.reduce((sum, val) => sum + val, 0);
+    const sum1Sq = values1.reduce((sum, val) => sum + val * val, 0);
+    const sum2Sq = values2.reduce((sum, val) => sum + val * val, 0);
+    const sum1Times2 = values1.reduce((sum, val, i) => sum + val * values2[i], 0);
+  
+    const numerator = n * sum1Times2 - sum1 * sum2;
+    const denominator = Math.sqrt((n * sum1Sq - sum1 * sum1) * (n * sum2Sq - sum2 * sum2));
+  
+    return denominator === 0 ? 0 : numerator / denominator;
   }
 }
