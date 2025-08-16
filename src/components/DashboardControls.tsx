@@ -98,18 +98,23 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
       category = 'Economic Activity';
     } else if (variable.series.toLowerCase().includes('high yield') || variable.series.toLowerCase().includes('oas') || variable.series.toLowerCase().includes('spread') || variable.fredTicker.includes('T10Y2Y') || variable.fredTicker.includes('BAML') || variable.series.toLowerCase().includes('corporate') || variable.series.toLowerCase().includes('stress')) {
       category = 'Credit & Risk Spreads';
-    } else if (variable.series.toLowerCase().includes('crude') || variable.series.toLowerCase().includes('price') || variable.fredTicker.includes('PCOPP') || variable.fredTicker.includes('GOLD') || variable.series.toLowerCase().includes('oil') || variable.series.toLowerCase().includes('gas') || variable.series.toLowerCase().includes('copper')) {
+    } else if (variable.series.toLowerCase().includes('crude') || variable.series.toLowerCase().includes('price') || variable.fredTicker.includes('PCOPP') || variable.fredTicker.includes('GOLD') || variable.series.toLowerCase().includes('oil') || variable.series.toLowerCase().includes('gas') || variable.series.toLowerCase().includes('copper') || variable.series.toLowerCase().includes('retail gasoline')) {
       category = 'Commodity Prices';
     } else if (variable.series.toLowerCase().includes('rate') || variable.series.toLowerCase().includes('yield') || variable.fredTicker.includes('DGS') || variable.series.toLowerCase().includes('fed funds') || variable.series.toLowerCase().includes('t-bill')) {
       category = 'Interest Rates & Yields';
-    } else if (variable.series.toLowerCase().includes('exchange') || variable.fredTicker.includes('DEX') || variable.series.toLowerCase().includes('dollar') || variable.series.toLowerCase().includes('eur') || variable.series.toLowerCase().includes('jpy') || variable.series.toLowerCase().includes('gbp')) {
+    } else if (variable.series.toLowerCase().includes('exchange') || variable.fredTicker.includes('DEX') || variable.series.toLowerCase().includes('dollar') || variable.series.toLowerCase().includes('eur') || variable.series.toLowerCase().includes('jpy') || variable.series.toLowerCase().includes('gbp') || variable.series.toLowerCase().includes('broad us dollar')) {
       category = 'Exchange Rates';
     } else if (variable.series.toLowerCase().includes('mortgage') || variable.series.toLowerCase().includes('housing') || variable.series.toLowerCase().includes('building') || variable.series.toLowerCase().includes('case-shiller')) {
       category = 'Housing & Mortgages';
     } else if (variable.series.toLowerCase().includes('unemployment') || variable.series.toLowerCase().includes('employment') || variable.series.toLowerCase().includes('payroll') || variable.series.toLowerCase().includes('job')) {
       category = 'Employment & Labor';
     } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ') || variable.series.toLowerCase().includes('vix')) {
-      category = 'Market Indices';
+      // Move S&P 500 and Nasdaq to Equity Factors, keep VIX in Market Indices
+      if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ')) {
+        category = 'Equity Factors';
+      } else {
+        category = 'Market Indices';
+      }
     }
     // If none of the above, it defaults to 'Economic Activity' instead of 'Other' - Updated
     

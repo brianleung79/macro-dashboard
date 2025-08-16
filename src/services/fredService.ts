@@ -243,6 +243,54 @@ export class FREDService {
     return { rollingMean, rollingStd };
   }
 
+  // Check data availability range for a variable
+  static async checkDataAvailability(variable: MacroVariable): Promise<{ startDate: string; endDate: string; dataPoints: number } | null> {
+    try {
+      // For ETFs, we'll use a default range since Alpha Vantage data is typically recent
+      if (variable.category && variable.subcategory) {
+        return {
+          startDate: '2010-01-01', // ETFs typically have data from around 2010
+          endDate: new Date().toISOString().split('T')[0],
+          dataPoints: 0 // We can't easily determine this without fetching
+        };
+      }
+
+      // For FRED variables, try to get series info
+      try {
+        const response = await axios.get(`${this.BACKEND_URL}/api/fred/${variable.fredTicker}/info`);
+        if (response.data && response.data.observation_start && response.data.observation_end) {
+          return {
+            startDate: response.data.observation_start,
+            endDate: response.data.observation_end,
+            dataPoints: response.data.observation_count || 0
+          };
+        }
+      } catch (error) {
+        console.log(`Could not get info for ${variable.fredTicker}, trying to fetch sample data`);
+      }
+
+      // Fallback: try to fetch a small sample to determine range
+      try {
+        const sampleData = await this.fetchTimeSeriesData(variable, '2000-01-01', new Date().toISOString().split('T')[0]);
+        if (sampleData.length > 0) {
+          const dates = sampleData.map(d => new Date(d.date)).sort((a, b) => a.getTime() - b.getTime());
+          return {
+            startDate: dates[0].toISOString().split('T')[0],
+            endDate: dates[dates.length - 1].toISOString().split('T')[0],
+            dataPoints: sampleData.length
+          };
+        }
+      } catch (error) {
+        console.log(`Could not fetch sample data for ${variable.fredTicker}`);
+      }
+
+      return null;
+    } catch (error) {
+      console.error(`Error checking data availability for ${variable.fredTicker}:`, error);
+      return null;
+    }
+  }
+
   static calculateRatio(
     data1: TimeSeriesData[],
     data2: TimeSeriesData[]

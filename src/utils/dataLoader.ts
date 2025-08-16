@@ -1,5 +1,6 @@
 import { MacroVariable } from '../types';
 import { AlphaVantageService } from '../services/alphaVantageService';
+import { FREDService } from '../services/fredService';
 
 export class DataLoader {
   static async loadMacroVariables(): Promise<MacroVariable[]> {
@@ -168,6 +169,54 @@ export class DataLoader {
     });
 
     return categories;
+  }
+
+  // Check data availability for all variables
+  static async checkAllVariablesDataAvailability(): Promise<Array<{ variable: MacroVariable; availability: { startDate: string; endDate: string; dataPoints: number } | null; has20Years: boolean }>> {
+    console.log('=== Checking Data Availability for All Variables ===');
+    const allVariables = await this.loadAllVariables();
+    const results = [];
+
+    for (const variable of allVariables) {
+      try {
+        const availability = await FREDService.checkDataAvailability(variable);
+        let has20Years = false;
+        
+        if (availability) {
+          const startDate = new Date(availability.startDate);
+          const endDate = new Date(availability.endDate);
+          const yearsDiff = (endDate.getFullYear() - startDate.getFullYear()) + 
+                           (endDate.getMonth() - startDate.getMonth()) / 12;
+          has20Years = yearsDiff >= 20;
+        }
+
+        results.push({
+          variable,
+          availability,
+          has20Years
+        });
+
+        // Log progress
+        console.log(`${variable.series}: ${availability ? `${availability.startDate} to ${availability.endDate} (${availability.dataPoints} points)` : 'Unknown'}, 20+ years: ${has20Years}`);
+      } catch (error) {
+        console.error(`Error checking availability for ${variable.series}:`, error);
+        results.push({
+          variable,
+          availability: null,
+          has20Years: false
+        });
+      }
+    }
+
+    // Summary
+    const with20Years = results.filter(r => r.has20Years).length;
+    const total = results.length;
+    console.log(`=== Summary ===`);
+    console.log(`Total variables: ${total}`);
+    console.log(`Variables with 20+ years of data: ${with20Years}`);
+    console.log(`Variables with less than 20 years: ${total - with20Years}`);
+
+    return results;
   }
 }
 
