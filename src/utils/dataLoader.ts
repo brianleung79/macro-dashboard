@@ -94,10 +94,17 @@ export class DataLoader {
     console.log('Total variables:', allVariables.length);
     console.log('Sample of all variables:', allVariables.slice(0, 5));
     
+    // Show category breakdown
+    const categories = this.groupVariablesByCategory(allVariables);
+    console.log('=== Category Breakdown ===');
+    Object.entries(categories).forEach(([category, variables]) => {
+      console.log(`${category}: ${variables.length} variables`);
+    });
+    
     return allVariables;
   }
 
-  static groupVariablesByCategory(variables: MacroVariable[]): Record<string, MacroVariable[]> {
+  static groupVariablesByCategory(variables: MacroVariable[]>): Record<string, MacroVariable[]> {
     const categories: Record<string, MacroVariable[]> = {
       'Interest Rates & Yields': [],
       'Inflation': [],
@@ -108,8 +115,7 @@ export class DataLoader {
       'Currency': [],
       'Commodities': [],
       'Credit & Stress': [],
-      'Factor ETFs': [],
-      'Sector ETFs': []
+      'Equity Factors': []
     };
 
     variables.forEach(variable => {
@@ -133,10 +139,18 @@ export class DataLoader {
         categories['Commodities'].push(variable);
       } else if (series.includes('corporate') || series.includes('stress') || series.includes('spread')) {
         categories['Credit & Stress'].push(variable);
-      } else if (variable.category === 'factor') {
-        categories['Factor ETFs'].push(variable);
-      } else if (variable.category === 'sector') {
-        categories['Sector ETFs'].push(variable);
+      } else if (variable.category === 'factor' || variable.category === 'sector') {
+        // All ETFs go to Equity Factors category
+        categories['Equity Factors'].push(variable);
+      } else if (series.includes('ppi') && series.includes('all commodities')) {
+        // Skip PPI All Commodities
+        continue;
+      } else if (series.includes('real personal consumption expenditures')) {
+        categories['Economic Activity'].push(variable);
+      } else if (series.includes('advanced retail sales')) {
+        categories['Economic Activity'].push(variable);
+      } else if (series.includes('nonfarm payrolls')) {
+        categories['Economic Activity'].push(variable);
       } else {
         // Default category for uncategorized items
         if (!categories['Economic Activity']) {
