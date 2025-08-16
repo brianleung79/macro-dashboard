@@ -1,4 +1,4 @@
-// Force new deployment - ETFs should now appear in Equity Factors category
+// Force new deployment - Updated index categorization and source citations
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { DashboardControls } from './components/DashboardControls';
