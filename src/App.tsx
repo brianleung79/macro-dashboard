@@ -1,4 +1,5 @@
 // Force new deployment - Updated index categorization and source citations
+// Added data availability checking and reorganized variable categories
 import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { DashboardControls } from './components/DashboardControls';

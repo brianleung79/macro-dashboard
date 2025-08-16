@@ -2,6 +2,7 @@ import React from 'react';
 import { MacroVariable, DashboardConfig, ChartTimeframe } from '../types';
 import { BarChart3, TrendingUp, Divide, Activity } from 'lucide-react';
 
+// Updated categorization: All major indices now in Market Indices, ETFs in Equity Factors
 interface DashboardControlsProps {
   config: DashboardConfig;
   onConfigChange: (config: DashboardConfig) => void;
