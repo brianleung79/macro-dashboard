@@ -65,22 +65,36 @@ export class DataLoader {
   }
 
   static loadETFFactors(): MacroVariable[] {
+    console.log('=== Loading ETF Factors ===');
     const etfFactors = AlphaVantageService.getAllETFs();
+    console.log('ETF factors found:', etfFactors.length);
+    console.log('Sample ETF factors:', etfFactors.slice(0, 3));
     
-    return etfFactors.map(etf => ({
+    const result = etfFactors.map(etf => ({
       series: `${etf.name} (${etf.symbol})`,
       fredTicker: etf.symbol,
       category: etf.category,
       subcategory: etf.subcategory,
       description: etf.description
     }));
+    
+    console.log('Converted ETF variables:', result.length);
+    return result;
   }
 
   static async loadAllVariables(): Promise<MacroVariable[]> {
+    console.log('=== Loading All Variables ===');
     const macroVariables = await this.loadMacroVariables();
-    const etfFactors = this.loadETFFactors();
+    console.log('Macro variables loaded:', macroVariables.length);
     
-    return [...macroVariables, ...etfFactors];
+    const etfFactors = this.loadETFFactors();
+    console.log('ETF factors loaded:', etfFactors.length);
+    
+    const allVariables = [...macroVariables, ...etfFactors];
+    console.log('Total variables:', allVariables.length);
+    console.log('Sample of all variables:', allVariables.slice(0, 5));
+    
+    return allVariables;
   }
 
   static groupVariablesByCategory(variables: MacroVariable[]): Record<string, MacroVariable[]> {
