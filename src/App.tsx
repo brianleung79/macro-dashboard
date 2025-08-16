@@ -65,6 +65,49 @@ function App() {
     loadVariables();
   }, []);
 
+  // Add data availability check
+  useEffect(() => {
+    const checkDataAvailability = async () => {
+      try {
+        console.log('=== Checking Data Availability ===');
+        const results = await DataLoader.checkAllVariablesDataAvailability();
+        
+        // Log summary to console
+        const with20Years = results.filter(r => r.has20Years).length;
+        const total = results.length;
+        console.log(`📊 Data Availability Summary:`);
+        console.log(`Total variables: ${total}`);
+        console.log(`Variables with 20+ years: ${with20Years}`);
+        console.log(`Variables with less than 20 years: ${total - with20Years}`);
+        
+        // Log details for variables without 20 years
+        const without20Years = results.filter(r => !r.has20Years);
+        if (without20Years.length > 0) {
+          console.log(`\n⚠️ Variables with less than 20 years of data:`);
+          without20Years.forEach(result => {
+            const { variable, availability } = result;
+            if (availability) {
+              const startDate = new Date(availability.startDate);
+              const endDate = new Date(availability.endDate);
+              const yearsDiff = (endDate.getFullYear() - startDate.getFullYear()) + 
+                               (endDate.getMonth() - startDate.getMonth()) / 12;
+              console.log(`  ${variable.series}: ${yearsDiff.toFixed(1)} years (${availability.startDate} to ${availability.endDate})`);
+            } else {
+              console.log(`  ${variable.series}: Unknown availability`);
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Error checking data availability:', error);
+      }
+    };
+    
+    // Run after variables are loaded
+    if (availableVariables.length > 0) {
+      checkDataAvailability();
+    }
+  }, [availableVariables]);
+
   const loadVariables = async () => {
     try {
       const variables = await DataLoader.loadAllVariables();
