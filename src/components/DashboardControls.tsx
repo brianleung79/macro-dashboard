@@ -111,7 +111,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
     } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ') || variable.series.toLowerCase().includes('vix')) {
       category = 'Market Indices';
     }
-    // If none of the above, it defaults to 'Economic Activity' instead of 'Other'
+    // If none of the above, it defaults to 'Economic Activity' instead of 'Other' - Updated
     
     if (!groups[category]) {
       groups[category] = [];
