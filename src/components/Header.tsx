@@ -23,8 +23,8 @@ export const Header: React.FC<HeaderProps> = ({ title }) => {
           
           <div className="flex items-center space-x-4">
             <div className="text-right">
-              <p className="text-sm text-slate-300">FRED API Integration</p>
-              <p className="text-xs text-slate-500">Real-time Economic Data</p>
+              <p className="text-sm text-slate-300">Economic Data Dashboard</p>
+              <p className="text-xs text-slate-500">Real-time Financial Data</p>
             </div>
           </div>
         </div>

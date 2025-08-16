@@ -438,6 +438,25 @@ function App() {
             />
           </div>
         </div>
+        
+        {/* Source Citations */}
+        <div className="mt-12 pb-8 border-t border-slate-700">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <div className="text-center text-xs text-slate-500">
+              <p className="mb-2">Data Sources:</p>
+              <div className="flex justify-center space-x-6">
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-blue-400 rounded-full"></span>
+                  FRED (Federal Reserve Economic Data)
+                </span>
+                <span className="flex items-center gap-1">
+                  <span className="w-2 h-2 bg-emerald-400 rounded-full"></span>
+                  Alpha Vantage (ETF Data)
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
       </main>
     </div>
   );

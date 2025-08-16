@@ -108,13 +108,9 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
       category = 'Housing & Mortgages';
     } else if (variable.series.toLowerCase().includes('unemployment') || variable.series.toLowerCase().includes('employment') || variable.series.toLowerCase().includes('payroll') || variable.series.toLowerCase().includes('job')) {
       category = 'Employment & Labor';
-    } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ') || variable.series.toLowerCase().includes('vix')) {
-      // Move S&P 500 and Nasdaq to Equity Factors, keep VIX in Market Indices
-      if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ')) {
-        category = 'Equity Factors';
-      } else {
-        category = 'Market Indices';
-      }
+    } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ') || variable.fredTicker.includes('RUT') || variable.fredTicker.includes('NIKKEI') || variable.fredTicker.includes('STOXX') || variable.fredTicker.includes('UKX') || variable.fredTicker.includes('DAX') || variable.fredTicker.includes('KOSPI') || variable.fredTicker.includes('SHCOMP') || variable.series.toLowerCase().includes('vix')) {
+      // All major indices go to Market Indices category
+      category = 'Market Indices';
     }
     // If none of the above, it defaults to 'Economic Activity' instead of 'Other' - Updated
     

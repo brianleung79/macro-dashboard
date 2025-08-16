@@ -31,7 +31,14 @@ Labor Force Participation Rate,CIVPART
 Case-Shiller U.S. National HPI (NSA),CSUSHPINSA
 S&P 500 Index,SP500
 Nasdaq Composite Index,NASDAQCOM
+Russell 2000 Small Cap Index,RUT
 CBOE VIX Index,VIXCLS
+Nikkei 225 Index,NIKKEI225
+Euro Stoxx 50 Index,STOXX50E
+FTSE 100 Index,UKX
+DAX Index,DAX
+KOSPI Index,KOSPI
+Shanghai Composite Index,SHCOMP
 "Broad U.S. Dollar Index, Nominal (Goods & Services)",DTWEXBGS
 USD per EUR (EUR/USD),DEXUSEU
 JPY per USD (USD/JPY),DEXJPUS
