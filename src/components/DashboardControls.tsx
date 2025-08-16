@@ -87,28 +87,31 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
 
   // Group variables by type for better organization
   const groupedVariables = availableVariables.reduce((groups, variable) => {
-    let category = 'Other';
+    let category = 'Economic Activity'; // Default to Economic Activity instead of Other
     
-    // Categorize variables based on their names/tickers
-    if (variable.series.toLowerCase().includes('pce') || variable.series.toLowerCase().includes('cpi') || variable.series.toLowerCase().includes('inflation')) {
+    // Check if this is an ETF first (has category/subcategory)
+    if (variable.category === 'factor' || variable.category === 'sector') {
+      category = 'Equity Factors';
+    } else if (variable.series.toLowerCase().includes('pce') || variable.series.toLowerCase().includes('cpi') || variable.series.toLowerCase().includes('inflation') || variable.series.toLowerCase().includes('ppi')) {
       category = 'Inflation & Prices';
-    } else if ((variable.series.toLowerCase().includes('industrial production') || variable.series.toLowerCase().includes('leading index') || variable.series.toLowerCase().includes('gdp') || variable.series.toLowerCase().includes('production') || variable.series.toLowerCase().includes('index')) && !variable.series.toLowerCase().includes('crude') && !variable.series.toLowerCase().includes('rate')) {
+    } else if (variable.series.toLowerCase().includes('industrial production') || variable.series.toLowerCase().includes('leading index') || variable.series.toLowerCase().includes('gdp') || variable.series.toLowerCase().includes('production') || variable.series.toLowerCase().includes('index') || variable.series.toLowerCase().includes('consumption') || variable.series.toLowerCase().includes('retail') || variable.series.toLowerCase().includes('sales')) {
       category = 'Economic Activity';
-    } else if (variable.series.toLowerCase().includes('high yield') || variable.series.toLowerCase().includes('oas') || variable.series.toLowerCase().includes('spread') || variable.fredTicker.includes('T10Y2Y') || variable.fredTicker.includes('BAML')) {
+    } else if (variable.series.toLowerCase().includes('high yield') || variable.series.toLowerCase().includes('oas') || variable.series.toLowerCase().includes('spread') || variable.fredTicker.includes('T10Y2Y') || variable.fredTicker.includes('BAML') || variable.series.toLowerCase().includes('corporate') || variable.series.toLowerCase().includes('stress')) {
       category = 'Credit & Risk Spreads';
-    } else if (variable.series.toLowerCase().includes('crude') || variable.series.toLowerCase().includes('price') || variable.fredTicker.includes('PCOPP') || variable.fredTicker.includes('GOLD')) {
+    } else if (variable.series.toLowerCase().includes('crude') || variable.series.toLowerCase().includes('price') || variable.fredTicker.includes('PCOPP') || variable.fredTicker.includes('GOLD') || variable.series.toLowerCase().includes('oil') || variable.series.toLowerCase().includes('gas') || variable.series.toLowerCase().includes('copper')) {
       category = 'Commodity Prices';
-    } else if (variable.series.toLowerCase().includes('rate') || variable.series.toLowerCase().includes('yield') || variable.fredTicker.includes('DGS')) {
+    } else if (variable.series.toLowerCase().includes('rate') || variable.series.toLowerCase().includes('yield') || variable.fredTicker.includes('DGS') || variable.series.toLowerCase().includes('fed funds') || variable.series.toLowerCase().includes('t-bill')) {
       category = 'Interest Rates & Yields';
-    } else if (variable.series.toLowerCase().includes('exchange') || variable.fredTicker.includes('DEX')) {
+    } else if (variable.series.toLowerCase().includes('exchange') || variable.fredTicker.includes('DEX') || variable.series.toLowerCase().includes('dollar') || variable.series.toLowerCase().includes('eur') || variable.series.toLowerCase().includes('jpy') || variable.series.toLowerCase().includes('gbp')) {
       category = 'Exchange Rates';
-    } else if (variable.series.toLowerCase().includes('mortgage') || variable.series.toLowerCase().includes('housing')) {
+    } else if (variable.series.toLowerCase().includes('mortgage') || variable.series.toLowerCase().includes('housing') || variable.series.toLowerCase().includes('building') || variable.series.toLowerCase().includes('case-shiller')) {
       category = 'Housing & Mortgages';
-    } else if (variable.series.toLowerCase().includes('unemployment') || variable.series.toLowerCase().includes('employment')) {
+    } else if (variable.series.toLowerCase().includes('unemployment') || variable.series.toLowerCase().includes('employment') || variable.series.toLowerCase().includes('payroll') || variable.series.toLowerCase().includes('job')) {
       category = 'Employment & Labor';
-    } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ')) {
+    } else if (variable.series.toLowerCase().includes('sp') || variable.fredTicker.includes('SP') || variable.fredTicker.includes('NASDAQ') || variable.series.toLowerCase().includes('vix')) {
       category = 'Market Indices';
     }
+    // If none of the above, it defaults to 'Economic Activity' instead of 'Other'
     
     if (!groups[category]) {
       groups[category] = [];
@@ -119,6 +122,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
 
   // Sort categories for consistent display
   const categoryOrder = [
+    'Equity Factors',
     'Market Indices',
     'Interest Rates & Yields',
     'Credit & Risk Spreads',
@@ -127,8 +131,7 @@ export const DashboardControls: React.FC<DashboardControlsProps> = ({
     'Economic Activity',
     'Exchange Rates',
     'Housing & Mortgages',
-    'Employment & Labor',
-    'Other'
+    'Employment & Labor'
   ];
 
   const renderVariableOptions = () => {
