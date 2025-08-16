@@ -100,6 +100,7 @@ export class DataLoader {
     Object.entries(categories).forEach(([category, variables]) => {
       console.log(`${category}: ${variables.length} variables`);
     });
+    console.log('=== Deployment forced ===');
     
     return allVariables;
   }
