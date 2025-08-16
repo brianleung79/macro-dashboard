@@ -1,6 +1,9 @@
 export interface MacroVariable {
   series: string;
   fredTicker: string;
+  category?: string;
+  subcategory?: string;
+  description?: string;
 }
 
 export interface TimeSeriesData {

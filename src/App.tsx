@@ -2,10 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Header } from './components/Header';
 import { DashboardControls } from './components/DashboardControls';
 import { DashboardDisplay } from './components/DashboardDisplay';
-import { ETFSelector } from './components/ETFSelector';
 import { DashboardConfig, MacroVariable, ChartData, TimeSeriesData } from './types';
 import { FREDService } from './services/fredService';
-import { AlphaVantageService, ETFData, TimeSeriesData as ETFTimeSeriesData } from './services/alphaVantageService';
+
 import { DataLoader } from './utils/dataLoader';
 import { Play, AlertCircle } from 'lucide-react';
 
@@ -26,9 +25,6 @@ function App() {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [selectedETFs, setSelectedETFs] = useState<ETFData[]>([]);
-  const [etfData, setEtfData] = useState<{ [symbol: string]: ETFTimeSeriesData[] }>({});
-  const [showETFAnalysis, setShowETFAnalysis] = useState(false);
   
   // Debug: Monitor chartData state changes
   useEffect(() => {
@@ -70,7 +66,7 @@ function App() {
 
   const loadVariables = async () => {
     try {
-      const variables = await DataLoader.loadMacroVariables();
+      const variables = await DataLoader.loadAllVariables();
       setAvailableVariables(variables);
     } catch (error) {
       console.error('Error loading variables:', error);
@@ -78,32 +74,7 @@ function App() {
     }
   };
 
-  const fetchETFData = async () => {
-    if (selectedETFs.length === 0) return;
-    
-    try {
-      console.log('=== Fetching ETF Data ===');
-      const symbols = selectedETFs.map(etf => etf.symbol);
-      console.log('Selected ETF symbols:', symbols);
-      
-      const data = await AlphaVantageService.fetchMultipleETFs(symbols);
-      console.log('ETF data received:', data);
-      setEtfData(data);
-    } catch (error) {
-      console.error('Error fetching ETF data:', error);
-      setError('Failed to fetch ETF data');
-    }
-  };
 
-  const convertETFDataToChartData = (etfData: { [symbol: string]: ETFTimeSeriesData[] }): ChartData[] => {
-    return Object.entries(etfData).map(([symbol, data]) => ({
-      x: data.map(d => d.date),
-      y: data.map(d => d.close),
-      name: symbol,
-      type: 'scatter' as const,
-      mode: 'lines' as const
-    }));
-  };
 
   // Utility function to convert TimeSeriesData to ChartData
   const convertToChartData = (timeSeriesData: TimeSeriesData[]): ChartData[] => {
@@ -383,55 +354,7 @@ function App() {
               availableVariables={availableVariables}
             />
             
-            {/* ETF Analysis Section */}
-            <div className="card bg-slate-800 border-slate-700 p-3 shadow-lg">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-slate-200">ETF Factor Analysis</h3>
-                <button
-                  onClick={() => setShowETFAnalysis(!showETFAnalysis)}
-                  className="text-xs px-2 py-1 bg-slate-600 hover:bg-slate-500 text-slate-200 rounded transition-colors"
-                >
-                  {showETFAnalysis ? 'Hide' : 'Show'}
-                </button>
-              </div>
-              
-              {showETFAnalysis && (
-                <>
-                  <ETFSelector
-                    selectedETFs={selectedETFs}
-                    onETFsSelected={setSelectedETFs}
-                  />
-                  
-                  {selectedETFs.length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <button
-                        onClick={fetchETFData}
-                        disabled={isLoading}
-                        className="w-full text-xs px-3 py-1 bg-green-600 hover:bg-green-700 text-white rounded transition-colors disabled:opacity-50"
-                      >
-                        Fetch ETF Data
-                      </button>
-                      
-                      <button
-                        onClick={() => {
-                          const etfChartData = convertETFDataToChartData(etfData);
-                          if (etfChartData.length > 0) {
-                            setChartData(prev => ({
-                              ...prev,
-                              chart1: etfChartData
-                            }));
-                          }
-                        }}
-                        disabled={Object.keys(etfData).length === 0}
-                        className="w-full text-xs px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white rounded transition-colors disabled:opacity-50"
-                      >
-                        Load ETFs to Chart 1
-                      </button>
-                    </div>
-                  )}
-                </>
-              )}
-            </div>
+
             
             <div className="card bg-slate-800 border-slate-700 p-3 shadow-lg">
               <button

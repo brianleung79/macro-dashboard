@@ -1,4 +1,5 @@
 import { MacroVariable } from '../types';
+import { AlphaVantageService } from '../services/alphaVantageService';
 
 export class DataLoader {
   static async loadMacroVariables(): Promise<MacroVariable[]> {
@@ -63,6 +64,25 @@ export class DataLoader {
     }
   }
 
+  static loadETFFactors(): MacroVariable[] {
+    const etfFactors = AlphaVantageService.getAllETFs();
+    
+    return etfFactors.map(etf => ({
+      series: `${etf.name} (${etf.symbol})`,
+      fredTicker: etf.symbol,
+      category: etf.category,
+      subcategory: etf.subcategory,
+      description: etf.description
+    }));
+  }
+
+  static async loadAllVariables(): Promise<MacroVariable[]> {
+    const macroVariables = await this.loadMacroVariables();
+    const etfFactors = this.loadETFFactors();
+    
+    return [...macroVariables, ...etfFactors];
+  }
+
   static groupVariablesByCategory(variables: MacroVariable[]): Record<string, MacroVariable[]> {
     const categories: Record<string, MacroVariable[]> = {
       'Interest Rates & Yields': [],
@@ -73,7 +93,9 @@ export class DataLoader {
       'Financial Markets': [],
       'Currency': [],
       'Commodities': [],
-      'Credit & Stress': []
+      'Credit & Stress': [],
+      'Factor ETFs': [],
+      'Sector ETFs': []
     };
 
     variables.forEach(variable => {
@@ -97,6 +119,10 @@ export class DataLoader {
         categories['Commodities'].push(variable);
       } else if (series.includes('corporate') || series.includes('stress') || series.includes('spread')) {
         categories['Credit & Stress'].push(variable);
+      } else if (variable.category === 'factor') {
+        categories['Factor ETFs'].push(variable);
+      } else if (variable.category === 'sector') {
+        categories['Sector ETFs'].push(variable);
       } else {
         // Default category for uncategorized items
         if (!categories['Economic Activity']) {

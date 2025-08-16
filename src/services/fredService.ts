@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { MacroVariable, TimeSeriesData, FREDResponse } from '../types';
+import { AlphaVantageService } from './alphaVantageService';
 
 // FRED API configuration
 const FRED_API_KEY = 'abf2178d3c7946daaddfb379a2567750';
@@ -16,6 +17,21 @@ export class FREDService {
     startDate: string,
     endDate: string
   ): Promise<TimeSeriesData[]> {
+    // Check if this is an ETF (has category/subcategory)
+    if (variable.category && variable.subcategory) {
+      // This is an ETF, use Alpha Vantage
+      try {
+        const etfData = await AlphaVantageService.fetchDailyData(variable.fredTicker);
+        return etfData.map(d => ({
+          date: d.date,
+          value: d.close,
+          series: variable.series
+        }));
+      } catch (error) {
+        console.error(`Error fetching ETF data for ${variable.fredTicker}:`, error);
+        throw error;
+      }
+    }
     try {
       console.log(`=== Fetching data for ${variable.series} (${variable.fredTicker}) ===`);
       console.log(`Date range: ${startDate} to ${endDate}`);
