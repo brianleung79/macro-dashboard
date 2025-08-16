@@ -105,7 +105,7 @@ export class DataLoader {
     return allVariables;
   }
 
-  static groupVariablesByCategory(variables: MacroVariable[]>): Record<string, MacroVariable[]> {
+  static groupVariablesByCategory(variables: MacroVariable[]): Record<string, MacroVariable[]> {
     const categories: Record<string, MacroVariable[]> = {
       'Interest Rates & Yields': [],
       'Inflation': [],
@@ -144,8 +144,7 @@ export class DataLoader {
         // All ETFs go to Equity Factors category
         categories['Equity Factors'].push(variable);
       } else if (series.includes('ppi') && series.includes('all commodities')) {
-        // Skip PPI All Commodities
-        continue;
+        // Skip PPI All Commodities - do nothing
       } else if (series.includes('real personal consumption expenditures')) {
         categories['Economic Activity'].push(variable);
       } else if (series.includes('advanced retail sales')) {
