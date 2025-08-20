@@ -1,22 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "api/fred/[seriesId].js": {
-      "maxDuration": 30
-    },
-    "api/health.js": {
-      "maxDuration": 10
+  "builds": [
+    {
+      "src": "package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "build"
+      }
     }
-  },
+  ],
   "routes": [
-    {
-      "src": "/api/fred/(.*)",
-      "dest": "/api/fred/[seriesId].js"
-    },
-    {
-      "src": "/api/health",
-      "dest": "/api/health.js"
-    },
     {
       "src": "/static/(.*)",
       "dest": "/static/$1"

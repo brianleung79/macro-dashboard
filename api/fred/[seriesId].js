@@ -18,7 +18,8 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const { seriesId } = req.query;
+    // Extract seriesId from the URL path
+    const seriesId = req.url.split('/').pop().split('?')[0];
     const { start, end, frequency = 'm', aggregation = 'avg' } = req.query;
     
     console.log(`Fetching FRED data for series: ${seriesId}, start: ${start}, end: ${end}`);
