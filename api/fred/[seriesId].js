@@ -18,12 +18,27 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Extract seriesId from the URL path
-    const seriesId = req.url.split('/').pop().split('?')[0];
+    // Get the seriesId from the URL path
+    const pathParts = req.url.split('/');
+    const seriesId = pathParts[pathParts.length - 1].split('?')[0];
+    
+    if (!seriesId || seriesId === '') {
+      console.error('No series ID found in URL:', req.url);
+      return res.status(400).json({ error: 'Series ID is required' });
+    }
+    
+    // Get query parameters
     const { start, end, frequency = 'm', aggregation = 'avg' } = req.query;
     
-    console.log(`Fetching FRED data for series: ${seriesId}, start: ${start}, end: ${end}`);
+    console.log(`=== FRED API Request ===`);
+    console.log(`Series ID: ${seriesId}`);
+    console.log(`Start: ${start}`);
+    console.log(`End: ${end}`);
+    console.log(`Frequency: ${frequency}`);
+    console.log(`Aggregation: ${aggregation}`);
+    console.log(`Full URL: ${req.url}`);
     
+    // Make request to FRED API
     const fredUrl = 'https://api.stlouisfed.org/fred/series/observations';
     const params = {
       series_id: seriesId,
@@ -35,24 +50,50 @@ module.exports = async (req, res) => {
       aggregation_method: aggregation
     };
     
+    console.log('FRED API parameters:', params);
+    
     const response = await axios.get(fredUrl, { params });
     
-    console.log(`Successfully fetched ${response.data.observations?.length || 0} observations for ${seriesId}`);
+    console.log(`=== FRED API Response ===`);
+    console.log(`Status: ${response.status}`);
+    console.log(`Data keys: ${Object.keys(response.data)}`);
+    console.log(`Observations count: ${response.data.observations?.length || 0}`);
     
+    // Validate the response
+    if (!response.data) {
+      throw new Error('No data received from FRED API');
+    }
+    
+    if (!response.data.observations) {
+      throw new Error('FRED API response missing observations data');
+    }
+    
+    if (!Array.isArray(response.data.observations)) {
+      throw new Error('FRED API observations is not an array');
+    }
+    
+    // Return the data exactly as FRED provides it
     res.json(response.data);
+    
   } catch (error) {
-    console.error('Error fetching FRED data:', error.message);
+    console.error('=== ERROR ===');
+    console.error('Error message:', error.message);
     
     if (error.response) {
-      console.error('FRED API response error:', error.response.status, error.response.data);
+      console.error('Response status:', error.response.status);
+      console.error('Response data:', error.response.data);
+      
       res.status(error.response.status).json({
         error: 'FRED API error',
+        status: error.response.status,
         details: error.response.data
       });
     } else {
+      console.error('No response object:', error);
+      
       res.status(500).json({
         error: 'Internal server error',
-        details: error.message
+        message: error.message
       });
     }
   }
