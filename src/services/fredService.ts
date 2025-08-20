@@ -17,9 +17,9 @@ export class FREDService {
     startDate: string,
     endDate: string
   ): Promise<TimeSeriesData[]> {
-    // Check if this is an ETF (has category/subcategory)
-    if (variable.category && variable.subcategory) {
-      // This is an ETF, use Alpha Vantage
+    // Check if this is an ETF (has category/subcategory) or if the symbol is available through Alpha Vantage
+    if (variable.category && variable.subcategory || AlphaVantageService.isSymbolAvailable(variable.fredTicker)) {
+      // This is an ETF or Alpha Vantage symbol, use Alpha Vantage
       try {
         const etfData = await AlphaVantageService.fetchDailyData(variable.fredTicker);
         return etfData.map(d => ({

@@ -85,16 +85,8 @@ export class DataLoader {
 
   static async loadAllVariables(): Promise<MacroVariable[]> {
     console.log('=== Loading All Variables ===');
-    
-    let macroVariables: MacroVariable[] = [];
-    try {
-      macroVariables = await this.loadMacroVariables();
-      console.log('Macro variables loaded:', macroVariables.length);
-    } catch (error) {
-      console.error('Failed to load macro variables from CSV:', error);
-      console.log('Continuing with ETF factors only...');
-      macroVariables = [];
-    }
+    const macroVariables = await this.loadMacroVariables();
+    console.log('Macro variables loaded:', macroVariables.length);
     
     const etfFactors = this.loadETFFactors();
     console.log('ETF factors loaded:', etfFactors.length);
@@ -109,10 +101,7 @@ export class DataLoader {
     Object.entries(categories).forEach(([category, variables]) => {
       console.log(`${category}: ${variables.length} variables`);
     });
-    
-    if (macroVariables.length === 0) {
-      console.warn('⚠️ No macro variables loaded - only ETF factors available');
-    }
+    console.log('=== Deployment forced ===');
     
     return allVariables;
   }
@@ -144,11 +133,11 @@ export class DataLoader {
         categories['Employment'].push(variable);
       } else if (series.includes('housing') || series.includes('building') || series.includes('case-shiller')) {
         categories['Housing'].push(variable);
-      } else if (series.includes('s&p') || series.includes('nasdaq') || series.includes('vix')) {
+      } else if (series.includes('s&p') || series.includes('nasdaq') || series.includes('vix') || series.includes('russell') || series.includes('euro stoxx') || series.includes('ftse') || series.includes('dax') || series.includes('kospi') || series.includes('shanghai')) {
         categories['Financial Markets'].push(variable);
       } else if (series.includes('dollar') || series.includes('eur') || series.includes('jpy') || series.includes('gbp') || series.includes('aud') || series.includes('mxn') || series.includes('cny') || series.includes('cad')) {
         categories['Currency'].push(variable);
-      } else if (series.includes('oil') || series.includes('gold') || series.includes('gas') || series.includes('copper')) {
+      } else if (series.includes('oil') || series.includes('gold') || series.includes('gas') || series.includes('copper') || series.includes('natural gas') || series.includes('crude oil')) {
         categories['Commodities'].push(variable);
       } else if (series.includes('corporate') || series.includes('stress') || series.includes('spread')) {
         categories['Credit & Stress'].push(variable);
@@ -157,17 +146,19 @@ export class DataLoader {
         categories['Equity Factors'].push(variable);
       } else if (series.includes('ppi') && series.includes('all commodities')) {
         // Skip PPI All Commodities - do nothing
-      } else if (series.includes('real personal consumption expenditures')) {
-        categories['Economic Activity'].push(variable);
-      } else if (series.includes('advanced retail sales')) {
-        categories['Economic Activity'].push(variable);
-      } else if (series.includes('nonfarm payrolls')) {
-        categories['Economic Activity'].push(variable);
-      } else {
-        // Default category for uncategorized items
-        if (!categories['Economic Activity']) {
-          categories['Economic Activity'] = [];
+      } else if (variable.category === 'commodity-etf' || variable.category === 'index') {
+        // Handle Alpha Vantage commodity ETFs and market indices
+        if (variable.category === 'commodity-etf') {
+          categories['Commodities'].push(variable);
+        } else if (variable.category === 'index') {
+          if (variable.subcategory === 'currency') {
+            categories['Currency'].push(variable);
+          } else {
+            categories['Financial Markets'].push(variable);
+          }
         }
+      } else {
+        // Default category for unclassified variables
         categories['Economic Activity'].push(variable);
       }
     });

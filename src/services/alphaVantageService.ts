@@ -7,7 +7,7 @@ const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
 export interface ETFData {
   symbol: string;
   name: string;
-  category: 'factor' | 'sector' | 'commodity' | 'bond';
+  category: 'factor' | 'sector' | 'commodity' | 'bond' | 'index' | 'commodity-etf';
   subcategory: string;
   description: string;
 }
@@ -61,19 +61,93 @@ export class AlphaVantageService {
     { symbol: 'XLB', name: 'Materials Select Sector SPDR Fund', category: 'sector', subcategory: 'materials', description: 'Materials sector' }
   ];
 
+  // Commodity ETFs and Market Indices
+  static readonly COMMODITY_AND_INDEX_ETFS: ETFData[] = [
+    // Gold and Precious Metals (ETFs that closely track spot prices)
+    { symbol: 'GLD', name: 'SPDR Gold Shares', category: 'commodity-etf', subcategory: 'gold', description: 'Gold bullion ETF - tracks spot gold price' },
+    { symbol: 'IAU', name: 'iShares Gold Trust', category: 'commodity-etf', subcategory: 'gold', description: 'Gold bullion ETF - tracks spot gold price' },
+    { symbol: 'SGOL', name: 'Aberdeen Standard Physical Gold ETF', category: 'commodity-etf', subcategory: 'gold', description: 'Gold bullion ETF - tracks spot gold price' },
+    
+    // Silver
+    { symbol: 'SLV', name: 'iShares Silver Trust', category: 'commodity-etf', subcategory: 'silver', description: 'Silver bullion ETF - tracks spot silver price' },
+    
+    // Oil and Energy (ETFs that track oil prices)
+    { symbol: 'USO', name: 'United States Oil Fund LP', category: 'commodity-etf', subcategory: 'oil', description: 'Crude oil futures ETF - tracks WTI oil prices' },
+    { symbol: 'BNO', name: 'United States Brent Oil Fund LP', category: 'commodity-etf', subcategory: 'oil', description: 'Brent crude oil ETF - tracks Brent oil prices' },
+    { symbol: 'UNG', name: 'United States Natural Gas Fund LP', category: 'commodity-etf', subcategory: 'natural-gas', description: 'Natural gas futures ETF' },
+    
+    // Copper and Industrial Metals
+    { symbol: 'CPER', name: 'United States Copper Index Fund', category: 'commodity-etf', subcategory: 'copper', description: 'Copper futures ETF - tracks copper prices' },
+    
+    // Agricultural Commodities
+    { symbol: 'DBA', name: 'Invesco DB Agriculture Fund', category: 'commodity-etf', subcategory: 'agriculture', description: 'Broad agriculture commodities ETF' },
+    { symbol: 'CORN', name: 'Teucrium Corn Fund', category: 'commodity-etf', subcategory: 'corn', description: 'Corn futures ETF' },
+    { symbol: 'SOYB', name: 'Teucrium Soybean Fund', category: 'commodity-etf', subcategory: 'soybeans', description: 'Soybean futures ETF' },
+    
+    // Market Indices (as ETFs)
+    { symbol: 'SPY', name: 'SPDR S&P 500 ETF Trust', category: 'index', subcategory: 'large-cap', description: 'S&P 500 index ETF' },
+    { symbol: 'IWM', name: 'iShares Russell 2000 ETF', category: 'index', subcategory: 'small-cap', description: 'Russell 2000 small-cap ETF' },
+    { symbol: 'QQQ', name: 'Invesco QQQ Trust', category: 'index', subcategory: 'technology', description: 'Nasdaq-100 ETF' },
+    { symbol: 'VEA', name: 'Vanguard FTSE Developed Markets ETF', category: 'index', subcategory: 'international', description: 'Developed markets ETF' },
+    { symbol: 'VWO', name: 'Vanguard FTSE Emerging Markets ETF', category: 'index', subcategory: 'emerging', description: 'Emerging markets ETF' },
+    
+    // European Indices
+    { symbol: 'FEZ', name: 'SPDR EURO STOXX 50 ETF', category: 'index', subcategory: 'europe', description: 'Euro Stoxx 50 ETF' },
+    { symbol: 'EWU', name: 'iShares MSCI United Kingdom ETF', category: 'index', subcategory: 'europe', description: 'UK market ETF' },
+    { symbol: 'EWG', name: 'iShares MSCI Germany ETF', category: 'index', subcategory: 'europe', description: 'German market ETF' },
+    
+    // Asian Indices
+    { symbol: 'EWY', name: 'iShares MSCI South Korea ETF', category: 'index', subcategory: 'asia', description: 'South Korea market ETF' },
+    { symbol: 'FXI', name: 'iShares China Large-Cap ETF', category: 'index', subcategory: 'asia', description: 'China large-cap ETF' },
+    
+    // Currency ETFs
+    { symbol: 'UUP', name: 'Invesco DB US Dollar Index Bullish Fund', category: 'index', subcategory: 'currency', description: 'US Dollar index ETF' },
+    { symbol: 'FXE', name: 'Invesco CurrencyShares Euro Trust', category: 'index', subcategory: 'currency', description: 'Euro ETF' },
+    { symbol: 'FXY', name: 'Invesco CurrencyShares Japanese Yen Trust', category: 'index', subcategory: 'currency', description: 'Japanese Yen ETF' },
+    { symbol: 'FXB', name: 'Invesco CurrencyShares British Pound Sterling Trust', category: 'index', subcategory: 'currency', description: 'British Pound ETF' }
+  ];
+
+  // Alternative: Commodity Futures Symbols (if users prefer futures over ETFs)
+  static readonly COMMODITY_FUTURES: string[] = [
+    '/GC',   // Gold futures
+    '/SI',   // Silver futures  
+    '/CL',   // Crude oil futures
+    '/NG',   // Natural gas futures
+    '/HG',   // Copper futures
+    '/ZC',   // Corn futures
+    '/ZS',   // Soybean futures
+    '/ZW'    // Wheat futures
+  ];
+
+  // Check if a symbol is a commodity futures symbol
+  static isCommodityFutures(symbol: string): boolean {
+    return this.COMMODITY_FUTURES.includes(symbol.toUpperCase());
+  }
+
   // Get all available ETFs
   static getAllETFs(): ETFData[] {
-    return [...this.FACTOR_ETFS, ...this.SECTOR_ETFS];
+    return [...this.FACTOR_ETFS, ...this.SECTOR_ETFS, ...this.COMMODITY_AND_INDEX_ETFS];
   }
 
   // Get ETFs by category
-  static getETFsByCategory(category: 'factor' | 'sector'): ETFData[] {
+  static getETFsByCategory(category: 'factor' | 'sector' | 'commodity' | 'bond' | 'index' | 'commodity-etf'): ETFData[] {
     return this.getAllETFs().filter(etf => etf.category === category);
   }
 
   // Get ETFs by subcategory
   static getETFsBySubcategory(subcategory: string): ETFData[] {
     return this.getAllETFs().filter(etf => etf.subcategory === subcategory);
+  }
+
+  // Check if a symbol is available through Alpha Vantage
+  static isSymbolAvailable(symbol: string): boolean {
+    const allSymbols = this.getAllETFs().map(etf => etf.symbol);
+    return allSymbols.includes(symbol.toUpperCase());
+  }
+
+  // Get ETF data for a symbol
+  static getETFData(symbol: string): ETFData | undefined {
+    return this.getAllETFs().find(etf => etf.symbol.toUpperCase() === symbol.toUpperCase());
   }
 
   // Fetch daily time series data for an ETF
