@@ -150,8 +150,8 @@ export class AlphaVantageService {
     return this.getAllETFs().find(etf => etf.symbol.toUpperCase() === symbol.toUpperCase());
   }
 
-  // Fetch daily time series data for an ETF
-  static async fetchDailyData(symbol: string, outputsize: 'compact' | 'full' = 'compact'): Promise<TimeSeriesData[]> {
+  // Fetch daily time series data for an ETF with retry logic
+  static async fetchDailyData(symbol: string, outputsize: 'compact' | 'full' = 'compact', retryCount: number = 0): Promise<TimeSeriesData[]> {
     try {
       if (!ALPHA_VANTAGE_API_KEY) {
         throw new Error('Alpha Vantage API key not configured. Please set REACT_APP_ALPHA_VANTAGE_API_KEY environment variable.');
@@ -163,17 +163,38 @@ export class AlphaVantageService {
       
       const response = await axios.get(url);
       
+      // Check for Alpha Vantage specific error messages
       if (response.data['Error Message']) {
         throw new Error(`Alpha Vantage error: ${response.data['Error Message']}`);
       }
       
+      // Check for rate limit warnings
       if (response.data['Note']) {
         console.warn('Alpha Vantage rate limit warning:', response.data['Note']);
+        
+        // Retry logic for rate limits
+        if (retryCount < 2) {
+          const waitTime = Math.min(60000 * Math.pow(2, retryCount), 300000); // Exponential backoff, max 5 minutes
+          console.log(`⏳ Rate limit hit, waiting ${waitTime/1000} seconds before retry ${retryCount + 1}/3...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          return this.fetchDailyData(symbol, outputsize, retryCount + 1);
+        } else {
+          throw new Error('Rate limit reached after 3 retries. Please wait before making more requests.');
+        }
+      }
+      
+      // Check for invalid API key
+      if (response.data['Information']) {
+        console.warn('Alpha Vantage info:', response.data['Information']);
+        if (response.data['Information'].includes('API key')) {
+          throw new Error('Invalid Alpha Vantage API key. Please check your configuration.');
+        }
       }
       
       const timeSeriesData = response.data['Time Series (Daily)'];
       if (!timeSeriesData) {
-        throw new Error('No time series data received');
+        console.error('Alpha Vantage response structure:', Object.keys(response.data));
+        throw new Error('No time series data received from Alpha Vantage API');
       }
       
       const data: TimeSeriesData[] = Object.entries(timeSeriesData)
@@ -197,31 +218,35 @@ export class AlphaVantageService {
     }
   }
 
-  // Fetch multiple ETFs data
+  // Fetch multiple ETFs data with improved rate limiting
   static async fetchMultipleETFs(symbols: string[]): Promise<{ [symbol: string]: TimeSeriesData[] }> {
     const results: { [symbol: string]: TimeSeriesData[] } = {};
     
-    // Process in batches to respect rate limits
-    const batchSize = 5; // Alpha Vantage allows 5 calls per minute on free tier
+    // Process in smaller batches to respect rate limits
+    const batchSize = 3; // Reduced from 5 to 3 for safety
+    console.log(`Fetching ${symbols.length} ETFs in batches of ${batchSize}`);
     
     for (let i = 0; i < symbols.length; i += batchSize) {
       const batch = symbols.slice(i, i + batchSize);
+      console.log(`Processing batch ${Math.floor(i / batchSize) + 1}: ${batch.join(', ')}`);
       
       const batchPromises = batch.map(async (symbol) => {
         try {
           const data = await this.fetchDailyData(symbol);
           results[symbol] = data;
+          console.log(`✅ Successfully fetched ${symbol}`);
         } catch (error) {
-          console.error(`Failed to fetch ${symbol}:`, error);
+          console.error(`❌ Failed to fetch ${symbol}:`, error);
           results[symbol] = [];
         }
       });
       
       await Promise.all(batchPromises);
       
-      // Rate limiting: wait 12 seconds between batches (5 calls per minute = 12 second intervals)
+      // Rate limiting: wait 15 seconds between batches (3 calls per minute = 20 second intervals, but we use 15 for safety)
       if (i + batchSize < symbols.length) {
-        await new Promise(resolve => setTimeout(resolve, 12000));
+        console.log(`⏳ Waiting 15 seconds before next batch...`);
+        await new Promise(resolve => setTimeout(resolve, 15000));
       }
     }
     
