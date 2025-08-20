@@ -28,7 +28,7 @@ module.exports = async (req, res) => {
     }
     
     // Get query parameters
-    const { start, end, frequency = 'm', aggregation = 'avg' } = req.query;
+    const { start, end, frequency, aggregation = 'avg' } = req.query;
     
     console.log(`=== FRED API Request ===`);
     console.log(`Series ID: ${seriesId}`);
@@ -40,22 +40,39 @@ module.exports = async (req, res) => {
     
     // Make request to FRED API
     const fredUrl = 'https://api.stlouisfed.org/fred/series/observations';
+    
+    // Use a working FRED API key for testing
+    const apiKey = 'abf2178d3c7946daaddfb379a2567750';
+    
+    // Build params, but only include frequency if it's provided and valid
     const params = {
       series_id: seriesId,
-      api_key: process.env.FRED_API_KEY || 'abf2178d3c7946daaddfb379a2567750',
+      api_key: apiKey,
       file_type: 'json',
       observation_start: start,
       observation_end: end,
-      frequency: frequency,
       aggregation_method: aggregation
     };
     
-    console.log('FRED API parameters:', params);
+    // Only add frequency if it's provided and not empty
+    if (frequency && frequency.trim() !== '') {
+      params.frequency = frequency;
+    }
     
-    const response = await axios.get(fredUrl, { params });
+    console.log('FRED API parameters:', params);
+    console.log('FRED API URL:', fredUrl);
+    
+    const response = await axios.get(fredUrl, { 
+      params,
+      timeout: 30000,
+      headers: {
+        'User-Agent': 'Macro-Analysis-App/1.0'
+      }
+    });
     
     console.log(`=== FRED API Response ===`);
     console.log(`Status: ${response.status}`);
+    console.log(`Status Text: ${response.statusText}`);
     console.log(`Data keys: ${Object.keys(response.data)}`);
     console.log(`Observations count: ${response.data.observations?.length || 0}`);
     
@@ -65,11 +82,19 @@ module.exports = async (req, res) => {
     }
     
     if (!response.data.observations) {
+      console.error('FRED API response missing observations:', response.data);
       throw new Error('FRED API response missing observations data');
     }
     
     if (!Array.isArray(response.data.observations)) {
+      console.error('FRED API observations is not an array:', typeof response.data.observations);
       throw new Error('FRED API observations is not an array');
+    }
+    
+    console.log(`Observations count: ${response.data.observations.length}`);
+    if (response.data.observations.length > 0) {
+      console.log(`First observation:`, response.data.observations[0]);
+      console.log(`Last observation:`, response.data.observations[response.data.observations.length - 1]);
     }
     
     // Return the data exactly as FRED provides it
@@ -78,21 +103,31 @@ module.exports = async (req, res) => {
   } catch (error) {
     console.error('=== ERROR ===');
     console.error('Error message:', error.message);
+    console.error('Error stack:', error.stack);
     
     if (error.response) {
       console.error('Response status:', error.response.status);
+      console.error('Response status text:', error.response.statusText);
       console.error('Response data:', error.response.data);
       
       res.status(error.response.status).json({
         error: 'FRED API error',
         status: error.response.status,
+        statusText: error.response.statusText,
         details: error.response.data
       });
-    } else {
-      console.error('No response object:', error);
+    } else if (error.request) {
+      console.error('No response received:', error.request);
       
       res.status(500).json({
-        error: 'Internal server error',
+        error: 'No response from FRED API',
+        message: 'Request was made but no response was received'
+      });
+    } else {
+      console.error('Error setting up request:', error.message);
+      
+      res.status(500).json({
+        error: 'Request setup error',
         message: error.message
       });
     }
