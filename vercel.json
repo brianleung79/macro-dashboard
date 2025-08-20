@@ -1,9 +1,33 @@
 {
   "version": 2,
+  "functions": {
+    "api/fred/[seriesId].js": {
+      "maxDuration": 30
+    },
+    "api/health.js": {
+      "maxDuration": 10
+    }
+  },
   "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/api/fred/(.*)",
+      "dest": "/api/fred/[seriesId].js"
+    },
+    {
+      "src": "/api/health",
+      "dest": "/api/health.js"
+    },
+    {
+      "src": "/static/(.*)",
+      "dest": "/static/$1"
+    },
+    {
+      "src": "/FRED_DATA.csv",
+      "dest": "/FRED_DATA.csv"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/index.html"
     }
   ]
 }

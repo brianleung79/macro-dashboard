@@ -9,7 +9,7 @@ const FRED_BASE_URL = 'https://api.stlouisfed.org/fred/series/observations';
 export class FREDService {
   // Base URL for the backend proxy (use relative URL for production)
   private static BACKEND_URL = process.env.NODE_ENV === 'production' 
-    ? '' 
+    ? '/api' // Use relative path for production
     : 'http://localhost:3001';
 
   static async fetchTimeSeriesData(
@@ -39,7 +39,7 @@ export class FREDService {
       // Try backend proxy first
       try {
         console.log('Trying backend proxy...');
-        const proxyUrl = `${this.BACKEND_URL}/api/fred/${variable.fredTicker}?start=${startDate}&end=${endDate}`;
+        const proxyUrl = `${this.BACKEND_URL}/fred/${variable.fredTicker}?start=${startDate}&end=${endDate}`;
         console.log('Backend proxy URL:', proxyUrl);
         
         const response = await axios.get(proxyUrl, {
@@ -72,7 +72,17 @@ export class FREDService {
         if (process.env.NODE_ENV === 'development') {
           return this.fetchWithCORSProxies(variable, startDate, endDate);
         } else {
-          throw new Error('Backend proxy is required in production. Please ensure the backend service is running.');
+          // In production, provide more helpful error message
+          const error = proxyError as any; // Type assertion for error handling
+          if (error.code === 'ECONNREFUSED' || error.code === 'ENOTFOUND') {
+            throw new Error('Backend service is not accessible. Please ensure the backend proxy server is running and deployed.');
+          } else if (error.response?.status === 404) {
+            throw new Error('Backend API endpoint not found. Please check the backend server configuration.');
+          } else if (error.response?.status >= 500) {
+            throw new Error('Backend server error. Please check the backend server logs.');
+          } else {
+            throw new Error(`Backend proxy error: ${error.message}. Please ensure the backend service is running.`);
+          }
         }
       }
       
@@ -257,7 +267,7 @@ export class FREDService {
 
       // For FRED variables, try to get series info
       try {
-        const response = await axios.get(`${this.BACKEND_URL}/api/fred/${variable.fredTicker}/info`);
+        const response = await axios.get(`${this.BACKEND_URL}/fred/${variable.fredTicker}/info`);
         if (response.data && response.data.observation_start && response.data.observation_end) {
           return {
             startDate: response.data.observation_start,

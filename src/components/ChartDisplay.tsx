@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import Plot from 'react-plotly.js';
-import { Download, Loader2, AlertCircle } from 'lucide-react';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { ChartData, ChartConfig } from '../types';
 
 interface ChartDisplayProps {
@@ -40,14 +40,6 @@ export const ChartDisplay: React.FC<ChartDisplayProps> = ({
       console.log('  ❌ Data is missing or empty');
     }
   }, [data, config, isLoading, error]);
-
-  const handleDownload = () => {
-    const plotDiv = document.getElementById('chart-container');
-    if (plotDiv) {
-      // This would need to be implemented with Plotly's download functionality
-      console.log('Download functionality would be implemented here');
-    }
-  };
 
   if (isLoading) {
     return (

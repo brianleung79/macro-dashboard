@@ -85,8 +85,16 @@ export class DataLoader {
 
   static async loadAllVariables(): Promise<MacroVariable[]> {
     console.log('=== Loading All Variables ===');
-    const macroVariables = await this.loadMacroVariables();
-    console.log('Macro variables loaded:', macroVariables.length);
+    
+    let macroVariables: MacroVariable[] = [];
+    try {
+      macroVariables = await this.loadMacroVariables();
+      console.log('Macro variables loaded:', macroVariables.length);
+    } catch (error) {
+      console.error('Failed to load macro variables from CSV:', error);
+      console.log('Continuing with ETF factors only...');
+      macroVariables = [];
+    }
     
     const etfFactors = this.loadETFFactors();
     console.log('ETF factors loaded:', etfFactors.length);
@@ -101,7 +109,10 @@ export class DataLoader {
     Object.entries(categories).forEach(([category, variables]) => {
       console.log(`${category}: ${variables.length} variables`);
     });
-    console.log('=== Deployment forced ===');
+    
+    if (macroVariables.length === 0) {
+      console.warn('⚠️ No macro variables loaded - only ETF factors available');
+    }
     
     return allVariables;
   }

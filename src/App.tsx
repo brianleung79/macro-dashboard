@@ -9,6 +9,7 @@ import { FREDService } from './services/fredService';
 
 import { DataLoader } from './utils/dataLoader';
 import { Play, AlertCircle } from 'lucide-react';
+import axios from 'axios'; // Added axios import
 
 function App() {
   const [availableVariables, setAvailableVariables] = useState<MacroVariable[]>([]);
@@ -161,6 +162,17 @@ function App() {
     setError(null);
 
     try {
+      // First, check if the backend API is available
+      try {
+        await axios.get('/api/health');
+        console.log('Backend API is available');
+      } catch (healthError) {
+        console.warn('Backend API health check failed:', healthError);
+        setError('Backend service is not available. Please try again later or contact support.');
+        setIsLoading(false);
+        return;
+      }
+
       const newChartData = {
         chart1: [] as ChartData[],
         chart2: [] as ChartData[],
@@ -419,6 +431,11 @@ function App() {
                   </>
                 )}
               </button>
+              
+              <div className="mt-3 text-xs text-slate-400">
+                <p>This analysis requires a backend service to fetch FRED data.</p>
+                <p>If you encounter issues, please ensure the backend is running.</p>
+              </div>
               
               {error && (
                 <div className="mt-4 p-2 bg-red-900/20 border border-red-700/30 rounded-lg">

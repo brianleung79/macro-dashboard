@@ -1,7 +1,12 @@
 {
   "name": "macro-api",
   "version": "1.0.0",
+  "description": "API functions for Macro analysis app",
+  "main": "index.js",
   "dependencies": {
     "axios": "^1.11.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }
