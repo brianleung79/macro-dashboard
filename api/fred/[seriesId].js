@@ -18,23 +18,39 @@ module.exports = async (req, res) => {
   }
 
   try {
-    // Get the seriesId from the URL path
+    // Get the seriesId from the URL path - handle both /seriesId and /seriesId/info
     const pathParts = req.url.split('/');
-    const seriesId = pathParts[pathParts.length - 1].split('?')[0];
+    let seriesId = '';
+    let isInfoRequest = false;
+    
+    // Check if this is an info request
+    if (pathParts.includes('info')) {
+      isInfoRequest = true;
+      // For info requests, seriesId is the second-to-last part
+      // URL format: /api/fred/SERIES/info
+      seriesId = pathParts[pathParts.length - 2];
+    } else {
+      // For data requests, seriesId is the last part
+      // URL format: /api/fred/SERIES
+      seriesId = pathParts[pathParts.length - 1].split('?')[0];
+    }
 
     if (!seriesId || seriesId === '') {
       console.error('No series ID found in URL:', req.url);
+      console.error('Path parts:', pathParts);
       return res.status(400).json({ error: 'Series ID is required' });
     }
 
-    // Check if this is an info request
-    const isInfoRequest = pathParts.includes('info');
+    console.log(`=== Request Details ===`);
+    console.log(`Full URL: ${req.url}`);
+    console.log(`Path parts:`, pathParts);
+    console.log(`Series ID: ${seriesId}`);
+    console.log(`Is Info Request: ${isInfoRequest}`);
     
     if (isInfoRequest) {
       // Handle series info request
       console.log(`=== FRED Series Info Request ===`);
       console.log(`Series ID: ${seriesId}`);
-      console.log(`Full URL: ${req.url}`);
 
       const fredUrl = 'https://api.stlouisfed.org/fred/series';
       const apiKey = 'abf2178d3c7946daaddfb379a2567750';
@@ -75,7 +91,6 @@ module.exports = async (req, res) => {
       console.log(`End: ${end}`);
       console.log(`Frequency: ${frequency}`);
       console.log(`Aggregation: ${aggregation}`);
-      console.log(`Full URL: ${req.url}`);
 
       // Make request to FRED API
       const fredUrl = 'https://api.stlouisfed.org/fred/series/observations';
