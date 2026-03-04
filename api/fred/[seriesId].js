@@ -18,6 +18,10 @@ module.exports = async (req, res) => {
   }
 
   try {
+    if (!process.env.FRED_API_KEY) {
+      return res.status(500).json({ error: 'FRED_API_KEY environment variable is not set' });
+    }
+
     // Get the seriesId from the URL path - handle both /seriesId and /seriesId/info
     const pathParts = req.url.split('/');
     let seriesId = '';
@@ -53,7 +57,7 @@ module.exports = async (req, res) => {
       console.log(`Series ID: ${seriesId}`);
 
       const fredUrl = 'https://api.stlouisfed.org/fred/series';
-      const apiKey = 'abf2178d3c7946daaddfb379a2567750';
+      const apiKey = process.env.FRED_API_KEY;
       
       const params = {
         series_id: seriesId,
@@ -94,7 +98,7 @@ module.exports = async (req, res) => {
 
       // Make request to FRED API
       const fredUrl = 'https://api.stlouisfed.org/fred/series/observations';
-      const apiKey = 'abf2178d3c7946daaddfb379a2567750';
+      const apiKey = process.env.FRED_API_KEY;
 
       // Build params, but only include frequency if it's provided and valid
       const params = {

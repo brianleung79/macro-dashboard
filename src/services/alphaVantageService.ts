@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 // Alpha Vantage API configuration
-const ALPHA_VANTAGE_API_KEY = process.env.REACT_APP_ALPHA_VANTAGE_API_KEY;
+const ALPHA_VANTAGE_API_KEY = import.meta.env.VITE_ALPHA_VANTAGE_API_KEY;
 const ALPHA_VANTAGE_BASE_URL = 'https://www.alphavantage.co/query';
 
 export interface ETFData {
@@ -154,7 +154,7 @@ export class AlphaVantageService {
   static async fetchDailyData(symbol: string, outputsize: 'compact' | 'full' = 'compact', retryCount: number = 0): Promise<TimeSeriesData[]> {
     try {
       if (!ALPHA_VANTAGE_API_KEY) {
-        throw new Error('Alpha Vantage API key not configured. Please set REACT_APP_ALPHA_VANTAGE_API_KEY environment variable.');
+        throw new Error('Alpha Vantage API key not configured. Please set VITE_ALPHA_VANTAGE_API_KEY environment variable.');
       }
       
       console.log(`=== Fetching Alpha Vantage data for ${symbol} ===`);

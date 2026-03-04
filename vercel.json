@@ -1,5 +1,8 @@
 {
   "version": 2,
+  "framework": "vite",
+  "buildCommand": "vite build",
+  "outputDirectory": "dist",
   "functions": {
     "api/fred/[seriesId].js": {
       "maxDuration": 30
@@ -16,10 +19,6 @@
     {
       "src": "/api/health",
       "dest": "/api/health.js"
-    },
-    {
-      "src": "/static/(.*)",
-      "dest": "/static/$1"
     },
     {
       "src": "/FRED_DATA.csv",
